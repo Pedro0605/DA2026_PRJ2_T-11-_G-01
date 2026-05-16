@@ -20,10 +20,10 @@ Given a set of **webs** (variable live ranges), a limited number of **K register
 
 | Algorithm | Description |
 |-----------|-------------|
-| **T2.1 — Basic Allocation** | Greedy Chaitin-style graph coloring using a stack. Iteratively removes nodes with degree < K, then assigns colors in reverse order. |
-| **T2.2 — Web Spilling** | When coloring fails, selects high-degree webs to spill to memory, simplifying the graph until K-colorable. |
-| **T2.3 — Web Splitting** | Splits webs into smaller live-range fragments to reduce interference graph connectivity. |
-| **T2.4 — Custom Algorithm** | Optimized allocation using custom heuristics (planarity metrics, node partitioning, etc.). |
+| **T2.1 - Basic Allocation** | Greedy Chaitin-style graph coloring using a stack. Iteratively removes nodes with degree < K, then assigns colors in reverse order. |
+| **T2.2 - Web Spilling** | When coloring fails, selects high-degree webs to spill to memory, simplifying the graph until K-colorable. |
+| **T2.3 - Web Splitting** | Splits webs into smaller live-range fragments to reduce interference graph connectivity. |
+| **T2.4 - Custom Algorithm** | Optimized allocation using custom heuristics (planarity metrics, node partitioning, etc.). |
 
 ## Build & Run
 
@@ -55,6 +55,6 @@ code/
 
 ## Team
 
-- Pedro — T2.1 (Basic Allocation), T2.2 (Web Spilling)
-- Lucas — T1.1/T1.2 (Interface, Parsing, Graph setup), T2.3 (Web Splitting), T3.5 (Output)
-- Gustavo — T2.4 (Custom Algorithm)
+- Pedro - T2.1 (Basic Allocation), T2.2 (Web Spilling)
+- Lucas - T1.1/T1.2 (Interface, Parsing, Graph setup), T2.3 (Web Splitting), T3.5 (Output)
+- Gustavo - T2.4 (Custom Algorithm)
