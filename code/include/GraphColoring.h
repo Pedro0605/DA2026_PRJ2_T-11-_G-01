@@ -9,6 +9,7 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <tuple>
 
 /**
  * @brief Builds and manages the interference graph from a set of webs.
@@ -114,6 +115,27 @@ public:
      */
     template <class T>
     static std::map<T, std::string> allocateRegistersFree(Graph<T>* graph, int maxRegisters);
+
+    static bool coloringWithSplitting(std::vector<Web>& webs, int K, int maxSplits,
+                                  std::unordered_map<int, int>& colorAssignment,
+                                  std::vector<std::tuple<int, int, int>>& splitLog);
+
+    /**
+     * @brief Performs custom graph coloring using the Welsh-Powell algorithm (T2.4).
+     * @details
+     * Sorts vertices by degree in descending order and colors them greedily to minimize
+     * register usage. Any vertices that cannot be colored with the available registers
+     * are spilled to memory.
+     *
+     * @par Time complexity
+     * O(V * log V + V^2 * K) where V is the number of vertices and K is the number
+     * of available colors (registers).
+     *
+     * @param graph Pointer to the interference graph.
+     * @param maxRegisters Number of available colors (registers).
+     * @return Map linking each web to its assigned register ("rX") or memory ("M").
+     */
+
 };
 
 #endif

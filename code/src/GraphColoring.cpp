@@ -225,3 +225,51 @@ std::map<T, std::string> GraphColoring::allocateRegistersFree(Graph<T>* graph, i
 }
 
 template std::map<int, std::string> GraphColoring::allocateRegistersFree(Graph<int>* graph, int maxRegisters);
+
+bool GraphColoring::coloringWithSplitting(std::vector<Web>& webs, int K, int maxSplits,
+                                           std::unordered_map<int, int>& colorAssignment,
+                                           std::vector<std::tuple<int,int,int>>& splitLog) {
+    int nextId = 0;
+    for (const auto& w : webs)
+        nextId = std::max(nextId, w.id + 1);
+
+    int splitsUsed = 0;
+
+    while (true) {
+        InterferenceGraph ig(K);
+        ig.build(webs);
+
+        colorAssignment.clear();
+        bool ok = basicColoring(ig.getGraph(), K, colorAssignment);
+
+        if (ok) {
+            if (splitsUsed > 0)
+                std::cout << "[Splitting] Coloring succeeded after "
+                          << splitsUsed << " split(s).\n";
+            return true;
+        }
+
+        if (splitsUsed >= maxSplits) {
+            std::cout << "[Splitting] Budget exhausted (" << maxSplits
+                      << " split(s) used). Coloring still fails.\n";
+            return false;
+        }
+
+        int targetId = pickWebToSplit(ig.getGraph());
+        if (targetId == -1) return false;
+
+        size_t idx = 0;
+        for (size_t i = 0; i < webs.size(); ++i)
+            if (webs[i].id == targetId) { idx = i; break; }
+
+        std::cout << "[Splitting] Split " << (splitsUsed + 1) << "/" << maxSplits
+                  << ": web " << targetId << " ('" << webs[idx].label
+                  << "', degree=" << ig.getGraph().findVertex(targetId)->getAdj().size()
+                  << ")\n";
+
+        std::tuple<int,int,int> entry;
+        splitWeb(webs, idx, nextId, entry);
+        splitLog.push_back(entry);
+        ++splitsUsed;
+    }
+}
