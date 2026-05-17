@@ -18,6 +18,12 @@ void InterferenceGraph::build(const std::vector<Web>& webs) {
     }
 }
 
+/**
+ * @brief Computes the effective degree of a vertex within a subset of active vertices.
+ * @param v The vertex.
+ * @param active Set of currently active vertex IDs.
+ * @return Number of neighbors of v that are in the active set.
+ */
 static int getEffectiveDegree(Vertex<int>* v, const std::unordered_set<int>& active) {
     int degree = 0;
     for (auto* e : v->getAdj()) {

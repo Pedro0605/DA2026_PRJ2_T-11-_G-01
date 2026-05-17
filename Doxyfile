@@ -1,0 +1,30 @@
+# Doxyfile for DA2026_PRJ2 Global Register Allocator
+
+PROJECT_NAME           = "Global Register Allocator"
+PROJECT_NUMBER         = "1.0"
+PROJECT_BRIEF          = "Register allocation via graph coloring - FEUP DA 2025/2026"
+OUTPUT_DIRECTORY       = docs
+INPUT                  = code/include code/src
+FILE_PATTERNS          = *.h *.cpp
+RECURSIVE              = NO
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_CLASSES  = YES
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+STRIP_CODE_COMMENTS    = NO
+GENERATE_TREEVIEW      = YES
+OPTIMIZE_OUTPUT_FOR_C  = NO
+TAB_SIZE               = 4
+GENERATE_LATEX         = NO
+GENERATE_HTML          = YES
+HTML_EXTRA_STYLESHEET  =
+HTML_COLORSTYLE_HUE    = 220
+HTML_COLORSTYLE_SAT    = 100
+HTML_COLORSTYLE_GAMMA  = 80
+HTML_TIMESTAMP         = YES
+DISABLE_INDEX          = NO
+ALPHABETICAL_INDEX     = YES
+IGNORE_PREFIX          =
+PREDEFINED             =

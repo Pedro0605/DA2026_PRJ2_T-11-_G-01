@@ -121,7 +121,6 @@ bool Parser::parseRegisters(const std::string& filename, Config& config) {
 
         } else if (line.rfind("algorithm:", 0) == 0) {
             std::string val = trim(line.substr(10));
-            // val may be "basic", "spilling, 3", "splitting, 2", "free"
             size_t commaPos = val.find(',');
             if (commaPos != std::string::npos) {
                 config.algorithm     = trim(val.substr(0, commaPos));

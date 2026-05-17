@@ -25,6 +25,26 @@ Given a set of **webs** (variable live ranges), a limited number of **K register
 | **T2.3 - Web Splitting** | Splits webs into smaller live-range fragments to reduce interference graph connectivity. |
 | **T2.4 - Custom Algorithm** | Optimized allocation using custom heuristics (planarity metrics, node partitioning, etc.). |
 
+## Documentation
+
+Doxygen-style comments are provided throughout the source code. To generate HTML documentation:
+
+```bash
+# Install doxygen (Ubuntu/Debian)
+sudo apt install doxygen
+
+# Generate documentation
+doxygen Doxyfile
+
+# Open docs/html/index.html in your browser
+```
+
+Time complexity annotations are included for the main algorithm functions:
+- **InterferenceGraph::build()**: O(V^2) - pairwise interference checks
+- **GraphColoring::basicColoring()**: O(V^2) - Chaitin simplify/select phases
+- **GraphColoring::coloringWithSpilling()**: O(S * V^2) worst-case O(V^3)
+- **Parser::parseRanges()**: O(L * F^2 * P) - fragment merging
+
 ## Build & Run
 
 ```bash

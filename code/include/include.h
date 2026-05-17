@@ -1,3 +1,11 @@
+/**
+ * @file include.h
+ * @brief Provides integer limit definitions.
+ *
+ * Defines INT_MAX and INT_MIN constants as alternatives to the
+ * standard <climits> macros.
+ */
+
 #ifndef DA2026_PRJ2_T_11__G_01_INCLUDE_H
 #define DA2026_PRJ2_T_11__G_01_INCLUDE_H
 
