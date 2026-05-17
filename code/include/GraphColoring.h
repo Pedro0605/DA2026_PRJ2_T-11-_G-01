@@ -113,58 +113,7 @@ public:
      * @return Map linking each web to its assigned register ("rX") or memory ("M").
      */
     template <class T>
-    static std::map<T, std::string> allocateRegistersFree(Graph<T>* graph, int maxRegisters) {
-        std::map<T, std::string> finalAllocation;
-        std::vector<Vertex<T>*> vertices = graph->getVertexSet();
-
-        if (vertices.empty()) return finalAllocation;
-
-        std::sort(vertices.begin(), vertices.end(), [](Vertex<T>* a, Vertex<T>* b) {
-            return a->getAdj().size() > b->getAdj().size();
-        });
-
-        std::map<T, int> colorMap;
-        for (auto* v : vertices) {
-            colorMap[v->getInfo()] = -1; 
-        }
-
-        int currentColor = 0;
-        int uncoloredCount = vertices.size();
-
-        while (uncoloredCount > 0 && currentColor < maxRegisters) {
-            for (auto* v : vertices) {
-                if (colorMap[v->getInfo()] == -1) {
-                    bool safeToColor = true;
-
-                    for (auto* edge : v->getAdj()) {
-                        if (colorMap[edge->getDest()->getInfo()] == currentColor) {
-                            safeToColor = false;
-                            break;
-                        }
-                    }
-
-                    if (safeToColor) {
-                        colorMap[v->getInfo()] = currentColor;
-                        uncoloredCount--;
-                    }
-                }
-            }
-            currentColor++;
-        }
-
-        for (auto* v : vertices) {
-            T webInfo = v->getInfo();
-            int assignedColor = colorMap[webInfo];
-
-            if (assignedColor == -1) {
-                finalAllocation[webInfo] = "M"; 
-            } else {
-                finalAllocation[webInfo] = "r" + std::to_string(assignedColor);
-            }
-        }
-
-        return finalAllocation;
-    }
+    static std::map<T, std::string> allocateRegistersFree(Graph<T>* graph, int maxRegisters);
 };
 
 #endif
