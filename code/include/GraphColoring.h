@@ -5,6 +5,10 @@
 #include "DataStructures.h"
 #include <stack>
 #include <unordered_map>
+#include <map>
+#include <vector>
+#include <algorithm>
+#include <string>
 
 /**
  * @brief Builds and manages the interference graph from a set of webs.
@@ -92,6 +96,75 @@ public:
     static bool coloringWithSpilling(Graph<int>& ig, int K,
                                      std::unordered_map<int, int>& colorAssignment,
                                      std::vector<int>& spilledWebs);
+
+    /**
+     * @brief Performs custom graph coloring using the Welsh-Powell algorithm (T2.4).
+     * @details
+     * Sorts vertices by degree in descending order and colors them greedily to minimize
+     * register usage. Any vertices that cannot be colored with the available registers
+     * are spilled to memory.
+     * 
+     * @par Time complexity
+     * O(V * log V + V^2 * K) where V is the number of vertices and K is the number
+     * of available colors (registers).
+     *
+     * @param graph Pointer to the interference graph.
+     * @param maxRegisters Number of available colors (registers).
+     * @return Map linking each web to its assigned register ("rX") or memory ("M").
+     */
+    template <class T>
+    static std::map<T, std::string> allocateRegistersFree(Graph<T>* graph, int maxRegisters) {
+        std::map<T, std::string> finalAllocation;
+        std::vector<Vertex<T>*> vertices = graph->getVertexSet();
+
+        if (vertices.empty()) return finalAllocation;
+
+        std::sort(vertices.begin(), vertices.end(), [](Vertex<T>* a, Vertex<T>* b) {
+            return a->getAdj().size() > b->getAdj().size();
+        });
+
+        std::map<T, int> colorMap;
+        for (auto* v : vertices) {
+            colorMap[v->getInfo()] = -1; 
+        }
+
+        int currentColor = 0;
+        int uncoloredCount = vertices.size();
+
+        while (uncoloredCount > 0 && currentColor < maxRegisters) {
+            for (auto* v : vertices) {
+                if (colorMap[v->getInfo()] == -1) {
+                    bool safeToColor = true;
+
+                    for (auto* edge : v->getAdj()) {
+                        if (colorMap[edge->getDest()->getInfo()] == currentColor) {
+                            safeToColor = false;
+                            break;
+                        }
+                    }
+
+                    if (safeToColor) {
+                        colorMap[v->getInfo()] = currentColor;
+                        uncoloredCount--;
+                    }
+                }
+            }
+            currentColor++;
+        }
+
+        for (auto* v : vertices) {
+            T webInfo = v->getInfo();
+            int assignedColor = colorMap[webInfo];
+
+            if (assignedColor == -1) {
+                finalAllocation[webInfo] = "M"; 
+            } else {
+                finalAllocation[webInfo] = "r" + std::to_string(assignedColor);
+            }
+        }
+
+        return finalAllocation;
+    }
 };
 
 #endif

@@ -173,7 +173,42 @@ void Menu::runSplitting() {
 }
 
 void Menu::runCustom() {
-    std::cout << "Custom algorithm (T2.4) is not yet implemented.\n";
+    if (!rangesLoaded || !registersLoaded) {
+        std::cout << "Please load both ranges and registers files first.\n";
+        return;
+    }
+
+    clearState();
+
+    InterferenceGraph ig(config.numRegisters);
+    ig.build(webs);
+
+    // Call your custom algorithm!
+    std::map<int, std::string> result = 
+        GraphColoring::allocateRegistersFree(&ig.getGraph(), config.numRegisters);
+
+    allocationSuccess = true; 
+    
+    // Translate your string results to Menu's internal state
+    for (const auto& pair : result) {
+        int webId = pair.first;
+        std::string assignment = pair.second;
+        
+        if (assignment == "M") {
+            spilledWebs.push_back(webId);
+        } else if (assignment.length() > 1 && assignment[0] == 'r') {
+            int color = std::stoi(assignment.substr(1));
+            colorAssignment[webId] = color;
+        }
+    }
+    
+    allocationDone = true;
+    applyResults();
+    
+    std::cout << "Custom allocation (Welsh-Powell) completed.\n";
+    if (!spilledWebs.empty()) {
+        std::cout << "Spilled " << spilledWebs.size() << " web(s) to memory.\n";
+    }
 }
 
 void Menu::writeOutput() {
