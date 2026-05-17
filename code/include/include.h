@@ -1,2 +1,7 @@
+#ifndef DA2026_PRJ2_T_11__G_01_INCLUDE_H
+#define DA2026_PRJ2_T_11__G_01_INCLUDE_H
+
 #define INT_MAX 2147483647
 #define INT_MIN -2147483648
+
+#endif

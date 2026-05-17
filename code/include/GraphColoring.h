@@ -6,6 +6,7 @@
 #include <string>
 #include <stack>
 #include <unordered_map>
+#include <algorithm>
 
 struct Interval {
     int start;
@@ -16,10 +17,21 @@ struct Interval {
     }
 };
 
+struct ProgramPoint {
+    int line;
+    char symbol;
+
+    bool operator<(const ProgramPoint& other) const {
+        return line < other.line;
+    }
+};
+
 struct Web {
     int id;
     std::vector<Interval> liveRanges;
     std::string label;
+    std::vector<ProgramPoint> points;
+    std::string assignedResource;
 
     bool interferesWith(const Web& other) const {
         for (const auto& a : liveRanges) {

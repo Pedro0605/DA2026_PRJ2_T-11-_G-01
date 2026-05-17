@@ -83,6 +83,26 @@ std::vector<Interval> Parser::parsePoints(const std::string& pointsStr) {
     return result;
 }
 
+std::vector<ProgramPoint> Parser::parseProgramPoints(const std::string& pointsStr) {
+    std::vector<ProgramPoint> result;
+    std::stringstream ss(pointsStr);
+    std::string tok;
+
+    while (std::getline(ss, tok, ',')) {
+        tok = trim(tok);
+        if (tok.empty()) continue;
+
+        bool hasSymbol = (!tok.empty() && (tok.back() == '+' || tok.back() == '-'));
+        char symbol = hasSymbol ? tok.back() : ' ';
+        std::string numStr = hasSymbol ? tok.substr(0, tok.size() - 1) : tok;
+        int line = std::stoi(numStr);
+
+        result.push_back({line, symbol});
+    }
+
+    return result;
+}
+
 bool Parser::parseRegisters(const std::string& filename, Config& config) {
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -123,7 +143,11 @@ bool Parser::parseRanges(const std::string& filename, std::vector<Web>& webs) {
     }
 
     std::vector<std::string> labelOrder;
-    std::unordered_map<std::string, std::vector<std::vector<Interval>>> fragmentsByLabel;
+    struct Fragment {
+        std::vector<Interval> intervals;
+        std::vector<ProgramPoint> points;
+    };
+    std::unordered_map<std::string, std::vector<Fragment>> fragmentsByLabel;
 
     std::string line;
     while (std::getline(file, line)) {
@@ -137,36 +161,37 @@ bool Parser::parseRanges(const std::string& filename, std::vector<Web>& webs) {
         std::string pointsStr  = trim(line.substr(colonPos + 1));
 
         std::vector<Interval> intervals = parsePoints(pointsStr);
+        std::vector<ProgramPoint> pts = parseProgramPoints(pointsStr);
         if (intervals.empty()) continue;
 
         if (fragmentsByLabel.find(label) == fragmentsByLabel.end())
             labelOrder.push_back(label);
 
-        fragmentsByLabel[label].push_back(intervals);
+        fragmentsByLabel[label].push_back({intervals, pts});
     }
 
     int nextId = 0;
 
     for (const auto& label : labelOrder) {
 
-        std::vector<std::vector<Interval>> groups = fragmentsByLabel[label];
+        std::vector<Fragment> groups = fragmentsByLabel[label];
 
         bool merged = true;
         while (merged) {
             merged = false;
             for (size_t i = 0; i < groups.size() && !merged; ++i) {
-                std::unordered_set<int> ptsI = pointSet(groups[i]);
+                std::unordered_set<int> ptsI = pointSet(groups[i].intervals);
                 for (size_t j = i + 1; j < groups.size(); ++j) {
-                    std::unordered_set<int> ptsJ = pointSet(groups[j]);
-                    // Check intersection
+                    std::unordered_set<int> ptsJ = pointSet(groups[j].intervals);
                     bool intersects = false;
                     for (int p : ptsJ) {
                         if (ptsI.count(p)) { intersects = true; break; }
                     }
                     if (intersects) {
-                        // Merge group j into group i
-                        groups[i].insert(groups[i].end(),
-                                         groups[j].begin(), groups[j].end());
+                        groups[i].intervals.insert(groups[i].intervals.end(),
+                                                   groups[j].intervals.begin(), groups[j].intervals.end());
+                        groups[i].points.insert(groups[i].points.end(),
+                                                groups[j].points.begin(), groups[j].points.end());
                         groups.erase(groups.begin() + j);
                         merged = true;
                         break;
@@ -175,11 +200,12 @@ bool Parser::parseRanges(const std::string& filename, std::vector<Web>& webs) {
             }
         }
         
-        for (auto& intervals : groups) {
+        for (auto& group : groups) {
             Web w;
             w.id         = nextId++;
             w.label      = label;
-            w.liveRanges = std::move(intervals);
+            w.liveRanges = std::move(group.intervals);
+            w.points     = std::move(group.points);
             webs.push_back(w);
         }
     }

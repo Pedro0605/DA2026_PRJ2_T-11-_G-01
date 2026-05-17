@@ -4,6 +4,7 @@
 #include "GraphColoring.h"
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 struct Config {
 
@@ -24,6 +25,7 @@ private:
 
     static std::string trim(const std::string& s);
     static std::vector<Interval> parsePoints(const std::string& pointsStr);
+    static std::vector<ProgramPoint> parseProgramPoints(const std::string& pointsStr);
     static std::unordered_set<int> pointSet(const std::vector<Interval>& intervals);
 
 };

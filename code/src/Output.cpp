@@ -1,4 +1,4 @@
-#include "output.h"
+#include "Output.h"
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -10,13 +10,14 @@ void OutputManager::writeOutputFile(const std::string& filename,
 
     std::ofstream outFile(filename);
     if (!outFile.is_open()) {
-        std::cerr << "Erro: Não foi possível criar o ficheiro de saída: " << filename << std::endl;
+        std::cerr << "Error: Could not create output file: " << filename << std::endl;
         return;
     }
 
     if (!allocationPossible) {
         std::cout << "Warning: the assignment to the provided number of registers was not possible." << std::endl;
         numRegisters = 0;
+    }
 
     outFile << "# Total number of webs followed by the listing of the program points of each one" << std::endl;
     outFile << "# program points in each web are sorted in ascending order" << std::endl;
@@ -24,8 +25,10 @@ void OutputManager::writeOutputFile(const std::string& filename,
 
     for (const auto& web : webs) {
         outFile << "web" << web.id << ": ";
+        std::vector<ProgramPoint> sortedPoints = web.points;
+        std::sort(sortedPoints.begin(), sortedPoints.end());
         bool first = true;
-        for (const auto& p : web.points) {
+        for (const auto& p : sortedPoints) {
             if (!first) outFile << ",";
             outFile << p.line;
             if (p.symbol != ' ') outFile << p.symbol;

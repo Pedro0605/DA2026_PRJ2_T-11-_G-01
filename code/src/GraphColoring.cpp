@@ -69,12 +69,15 @@ bool GraphColoring::basicColoring(Graph<int>& ig, int K,
             }
         }
 
-        int color = 0;
+        int color = -1;
         for (int c = 0; c < K; c++) {
             if (!used[c]) {
                 color = c;
                 break;
             }
+        }
+        if (color == -1) {
+            return false;
         }
         colorAssignment[id] = color;
     }
@@ -90,7 +93,7 @@ bool GraphColoring::coloringWithSpilling(Graph<int>& ig, int K,
         active.insert(v->getInfo());
     }
 
-    while (static_cast<int>(spilledWebs.size()) <= K) {
+    while (spilledWebs.size() < ig.getVertexSet().size()) {
         colorAssignment.clear();
         std::unordered_set<int> remaining = active;
         std::stack<int> nodeStack;
@@ -126,12 +129,15 @@ bool GraphColoring::coloringWithSpilling(Graph<int>& ig, int K,
                     }
                 }
 
-                int color = 0;
+                int color = -1;
                 for (int c = 0; c < K; c++) {
                     if (!used[c]) {
                         color = c;
                         break;
                     }
+                }
+                if (color == -1) {
+                    return false;
                 }
                 colorAssignment[id] = color;
             }

@@ -32,7 +32,7 @@ public:
     /** @brief Returns vertex payload. */
     T getInfo() const;
     /** @brief Returns outgoing adjacency list. */
-    std::vector<Edge<T> *> getAdj() const;
+    const std::vector<Edge<T> *>& getAdj() const;
     /** @brief Returns visitation flag used by traversals. */
     bool isVisited() const;
     /** @brief Returns predecessor edge used in path reconstruction. */
@@ -232,7 +232,7 @@ T Vertex<T>::getInfo() const {
 }
 
 template <class T>
-std::vector<Edge<T>*> Vertex<T>::getAdj() const {
+const std::vector<Edge<T>*>& Vertex<T>::getAdj() const {
     return this->adj;
 }
 
@@ -266,7 +266,7 @@ void Vertex<T>::deleteEdge(Edge<T> *edge) {
     Vertex<T> *dest = edge->getDest();
     auto it = dest->incoming.begin();
     while (it != dest->incoming.end()) {
-        if ((*it)->getOrig()->getInfo() == info) {
+        if ((*it)->getOrig() == this) {
             it = dest->incoming.erase(it);
         }
         else {
