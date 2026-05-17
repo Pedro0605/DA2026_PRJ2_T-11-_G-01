@@ -7,6 +7,10 @@
 #include <unordered_set>
 #include <algorithm>
 
+/**
+ * @brief Implementation of Parser::trim.
+ * @see Parser.h for full documentation.
+ */
 std::string Parser::trim(const std::string& s) {
 
     size_t start = s.find_first_not_of(" \t\r\n");
@@ -20,17 +24,23 @@ std::string Parser::trim(const std::string& s) {
 
 }
 
-std::unordered_set<int> Parser::pointSet(const std::vector<Interval>& intervals) {
+/**
+ * @brief Implementation of Parser::pointSet.
+ * @see Parser.h for full documentation.
+ */
+bool Parser::intervalsOverlap(const std::vector<Interval>& a, const std::vector<Interval>& b) {
 
-    std::unordered_set<int> pts;
-
-    for (const auto& iv : intervals)
-        for (int p = iv.start; p <= iv.end; ++p)
-            pts.insert(p);
-    return pts;
+    for (const auto& ia : a)
+        for (const auto& ib : b)
+            if (ia.overlaps(ib)) return true;
+    return false;
 
 }
 
+/**
+ * @brief Implementation of Parser::parsePoints.
+ * @see Parser.h for full documentation.
+ */
 std::vector<Interval> Parser::parsePoints(const std::string& pointsStr) {
 
     std::vector<Interval> result;
@@ -46,6 +56,7 @@ std::vector<Interval> Parser::parsePoints(const std::string& pointsStr) {
     if (tokens.empty()) return result;
 
     int intervalStart = -1;
+    int prevPoint = -1;
 
     for (size_t i = 0; i < tokens.size(); ++i) {
         const std::string& t = tokens[i];
@@ -53,10 +64,18 @@ std::vector<Interval> Parser::parsePoints(const std::string& pointsStr) {
         bool isMinus = (!t.empty() && t.back() == '-');
 
         std::string numStr = (isPlus || isMinus) ? t.substr(0, t.size() - 1) : t;
-        int point = std::stoi(numStr);
+        int point = 0;
+        try { point = std::stoi(numStr); } catch (...) { return {}; }
 
         if (intervalStart == -1) {
             intervalStart = point;
+            prevPoint = point;
+        } else if (point < prevPoint && !isMinus) {
+            result.push_back({intervalStart, prevPoint});
+            intervalStart = point;
+            prevPoint = point;
+        } else {
+            prevPoint = point;
         }
 
         if (isMinus) {
@@ -70,19 +89,17 @@ std::vector<Interval> Parser::parsePoints(const std::string& pointsStr) {
         }
     }
 
-    if (intervalStart != -1 && !tokens.empty()) {
-        const std::string& last = tokens.back();
-        bool lastIsMinus = (!last.empty() && last.back() == '-');
-        bool lastIsPlus  = (!last.empty() && last.back() == '+');
-        std::string numStr = (lastIsMinus || lastIsPlus)
-                             ? last.substr(0, last.size() - 1) : last;
-        int lastPoint = std::stoi(numStr);
-        result.push_back({intervalStart, lastPoint});
+    if (intervalStart != -1) {
+        result.push_back({intervalStart, prevPoint >= 0 ? prevPoint : intervalStart});
     }
 
     return result;
 }
 
+/**
+ * @brief Implementation of Parser::parseProgramPoints.
+ * @see Parser.h for full documentation.
+ */
 std::vector<ProgramPoint> Parser::parseProgramPoints(const std::string& pointsStr) {
     std::vector<ProgramPoint> result;
     std::stringstream ss(pointsStr);
@@ -95,7 +112,8 @@ std::vector<ProgramPoint> Parser::parseProgramPoints(const std::string& pointsSt
         bool hasSymbol = (!tok.empty() && (tok.back() == '+' || tok.back() == '-'));
         char symbol = hasSymbol ? tok.back() : ' ';
         std::string numStr = hasSymbol ? tok.substr(0, tok.size() - 1) : tok;
-        int line = std::stoi(numStr);
+        int line = 0;
+        try { line = std::stoi(numStr); } catch (...) { return {}; }
 
         result.push_back({line, symbol});
     }
@@ -103,6 +121,10 @@ std::vector<ProgramPoint> Parser::parseProgramPoints(const std::string& pointsSt
     return result;
 }
 
+/**
+ * @brief Implementation of Parser::parseRegisters.
+ * @see Parser.h for full documentation.
+ */
 bool Parser::parseRegisters(const std::string& filename, Config& config) {
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -117,14 +139,14 @@ bool Parser::parseRegisters(const std::string& filename, Config& config) {
 
         if (line.rfind("registers:", 0) == 0) {
             std::string val = trim(line.substr(10));
-            config.numRegisters = std::stoi(val);
+            try { config.numRegisters = std::stoi(val); } catch (...) { continue; }
 
         } else if (line.rfind("algorithm:", 0) == 0) {
             std::string val = trim(line.substr(10));
             size_t commaPos = val.find(',');
             if (commaPos != std::string::npos) {
                 config.algorithm     = trim(val.substr(0, commaPos));
-                config.algorithmParam = std::stoi(trim(val.substr(commaPos + 1)));
+                try { config.algorithmParam = std::stoi(trim(val.substr(commaPos + 1))); } catch (...) { config.algorithmParam = 0; }
             } else {
                 config.algorithm = val;
                 config.algorithmParam = 0;
@@ -134,6 +156,10 @@ bool Parser::parseRegisters(const std::string& filename, Config& config) {
     return true;
 }
 
+/**
+ * @brief Implementation of Parser::parseRanges.
+ * @see Parser.h for full documentation.
+ */
 bool Parser::parseRanges(const std::string& filename, std::vector<Web>& webs) {
     std::ifstream file(filename);
     if (!file.is_open()) {
@@ -179,14 +205,8 @@ bool Parser::parseRanges(const std::string& filename, std::vector<Web>& webs) {
         while (merged) {
             merged = false;
             for (size_t i = 0; i < groups.size() && !merged; ++i) {
-                std::unordered_set<int> ptsI = pointSet(groups[i].intervals);
                 for (size_t j = i + 1; j < groups.size(); ++j) {
-                    std::unordered_set<int> ptsJ = pointSet(groups[j].intervals);
-                    bool intersects = false;
-                    for (int p : ptsJ) {
-                        if (ptsI.count(p)) { intersects = true; break; }
-                    }
-                    if (intersects) {
+                    if (intervalsOverlap(groups[i].intervals, groups[j].intervals)) {
                         groups[i].intervals.insert(groups[i].intervals.end(),
                                                    groups[j].intervals.begin(), groups[j].intervals.end());
                         groups[i].points.insert(groups[i].points.end(),

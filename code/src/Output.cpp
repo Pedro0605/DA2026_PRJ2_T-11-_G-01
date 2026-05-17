@@ -3,6 +3,10 @@
 #include <fstream>
 #include <algorithm>
 
+/**
+ * @brief Implementation of OutputManager::writeOutputFile.
+ * @see Output.h for full documentation.
+ */
 void OutputManager::writeOutputFile(const std::string& filename,
                                     const std::vector<Web>& webs,
                                     int numRegisters,
@@ -19,8 +23,6 @@ void OutputManager::writeOutputFile(const std::string& filename,
         numRegisters = 0;
     }
 
-    outFile << "# Total number of webs followed by the listing of the program points of each one" << std::endl;
-    outFile << "# program points in each web are sorted in ascending order" << std::endl;
     outFile << "webs: " << webs.size() << std::endl;
 
     for (const auto& web : webs) {
@@ -37,7 +39,6 @@ void OutputManager::writeOutputFile(const std::string& filename,
         outFile << std::endl;
     }
 
-    outFile << "# Total number of registers used, followed by assignment to webs" << std::endl;
     outFile << "registers: " << numRegisters << std::endl;
 
     for (const auto& web : webs) {

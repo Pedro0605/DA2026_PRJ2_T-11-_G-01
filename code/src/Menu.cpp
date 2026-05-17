@@ -6,6 +6,10 @@
 #include <set>
 #include <unistd.h>
 
+/**
+ * @brief Implementation of Menu::run.
+ * @see Menu.h for full documentation.
+ */
 void Menu::run() {
     int option = -1;
     while (option != 9) {
@@ -40,6 +44,10 @@ void Menu::run() {
     }
 }
 
+/**
+ * @brief Implementation of Menu::displayMenu.
+ * @see Menu.h for full documentation.
+ */
 void Menu::displayMenu() {
     std::cout << "\n===== Global Register Allocator =====\n";
     std::cout << " 1. Load ranges file\n";
@@ -66,6 +74,10 @@ void Menu::displayMenu() {
     std::cout << "Choose an option: ";
 }
 
+/**
+ * @brief Implementation of Menu::loadRanges.
+ * @see Menu.h for full documentation.
+ */
 void Menu::loadRanges() {
     std::cout << "Enter ranges file path: ";
     std::string path;
@@ -85,6 +97,10 @@ void Menu::loadRanges() {
     std::cout << "Loaded " << webs.size() << " web(s) from " << path << "\n";
 }
 
+/**
+ * @brief Implementation of Menu::loadRegisters.
+ * @see Menu.h for full documentation.
+ */
 void Menu::loadRegisters() {
     std::cout << "Enter registers file path: ";
     std::string path;
@@ -114,6 +130,10 @@ void Menu::loadRegisters() {
     }
 }
 
+/**
+ * @brief Implementation of Menu::runBasic.
+ * @see Menu.h for full documentation.
+ */
 void Menu::runBasic() {
     if (!rangesLoaded || !registersLoaded) {
         std::cout << "Please load both ranges and registers files first.\n";
@@ -139,6 +159,10 @@ void Menu::runBasic() {
     }
 }
 
+/**
+ * @brief Implementation of Menu::runSpilling.
+ * @see Menu.h for full documentation.
+ */
 void Menu::runSpilling() {
     if (!rangesLoaded || !registersLoaded) {
         std::cout << "Please load both ranges and registers files first.\n";
@@ -150,10 +174,12 @@ void Menu::runSpilling() {
     InterferenceGraph ig(config.numRegisters);
     ig.build(webs);
 
+    int maxSpills = config.algorithmParam > 0 ? config.algorithmParam : ig.getGraph().getVertexSet().size();
     allocationSuccess = GraphColoring::coloringWithSpilling(ig.getGraph(),
                                                             config.numRegisters,
                                                             colorAssignment,
-                                                            spilledWebs);
+                                                            spilledWebs,
+                                                            maxSpills);
     allocationDone = true;
 
     applyResults();
@@ -168,10 +194,47 @@ void Menu::runSpilling() {
     }
 }
 
+/**
+ * @brief Implementation of Menu::runSplitting.
+ * @see Menu.h for full documentation.
+ */
 void Menu::runSplitting() {
-    std::cout << "Web splitting (T2.3) is not yet implemented.\n";
+    if (!rangesLoaded || !registersLoaded) {
+        std::cout << "Please load both ranges and registers files first.\n";
+        return;
+    }
+
+    clearState();
+
+    std::vector<std::tuple<int,int,int>> splitLog;
+    allocationSuccess = GraphColoring::coloringWithSplitting(webs,
+                                                             config.numRegisters,
+                                                             config.algorithmParam > 0 ? config.algorithmParam : 3,
+                                                             colorAssignment,
+                                                             splitLog);
+    allocationDone = true;
+
+    applyResults();
+
+    if (allocationSuccess) {
+        std::cout << "Allocation with splitting succeeded.\n";
+        if (!splitLog.empty()) {
+            std::cout << "Performed " << splitLog.size() << " split(s):\n";
+            for (const auto& entry : splitLog) {
+                std::cout << "  web" << std::get<0>(entry)
+                          << " split at point " << std::get<2>(entry)
+                          << " -> created web" << std::get<1>(entry) << "\n";
+            }
+        }
+    } else {
+        std::cout << "Allocation with splitting failed.\n";
+    }
 }
 
+/**
+ * @brief Implementation of Menu::runCustom.
+ * @see Menu.h for full documentation.
+ */
 void Menu::runCustom() {
     if (!rangesLoaded || !registersLoaded) {
         std::cout << "Please load both ranges and registers files first.\n";
@@ -211,6 +274,10 @@ void Menu::runCustom() {
     }
 }
 
+/**
+ * @brief Implementation of Menu::writeOutput.
+ * @see Menu.h for full documentation.
+ */
 void Menu::writeOutput() {
     if (!allocationDone) {
         std::cout << "No allocation results to write. Run an algorithm first.\n";
@@ -227,6 +294,10 @@ void Menu::writeOutput() {
     std::cout << "Output written to " << path << "\n";
 }
 
+/**
+ * @brief Implementation of Menu::displayResults.
+ * @see Menu.h for full documentation.
+ */
 void Menu::displayResults() {
     if (!allocationDone) {
         std::cout << "No allocation results to display. Run an algorithm first.\n";
@@ -254,6 +325,10 @@ void Menu::displayResults() {
     }
 }
 
+/**
+ * @brief Implementation of Menu::runConfiguredAlgorithm.
+ * @see Menu.h for full documentation.
+ */
 void Menu::runConfiguredAlgorithm() {
     if (config.algorithm == "spilling") {
         runSpilling();
@@ -266,12 +341,20 @@ void Menu::runConfiguredAlgorithm() {
     }
 }
 
+/**
+ * @brief Implementation of Menu::applyResults.
+ * @see Menu.h for full documentation.
+ */
 void Menu::applyResults() {
     for (auto& web : webs) {
         web.assignedResource = resourceForWeb(web.id);
     }
 }
 
+/**
+ * @brief Implementation of Menu::clearState.
+ * @see Menu.h for full documentation.
+ */
 void Menu::clearState() {
     colorAssignment.clear();
     spilledWebs.clear();
@@ -279,6 +362,10 @@ void Menu::clearState() {
     allocationSuccess = false;
 }
 
+/**
+ * @brief Implementation of Menu::resourceForWeb.
+ * @see Menu.h for full documentation.
+ */
 std::string Menu::resourceForWeb(int id) const {
     if (!allocationSuccess) {
         return "M";

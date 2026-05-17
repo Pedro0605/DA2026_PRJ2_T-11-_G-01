@@ -35,9 +35,9 @@ private:
     void runBasic();
     /** @brief Runs allocation with spilling. */
     void runSpilling();
-    /** @brief Runs allocation with splitting (T2.3, not yet implemented). */
+    /** @brief Runs allocation with live-range splitting. */
     void runSplitting();
-    /** @brief Runs the custom algorithm (T2.4, not yet implemented). */
+    /** @brief Runs the custom Welsh-Powell algorithm. */
     void runCustom();
     /** @brief Prompts for and writes output to a file. */
     void writeOutput();

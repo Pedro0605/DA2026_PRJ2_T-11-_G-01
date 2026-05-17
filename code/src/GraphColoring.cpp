@@ -2,8 +2,16 @@
 #include <unordered_set>
 #include <algorithm>
 
+/**
+ * @brief Implementation of InterferenceGraph::InterferenceGraph.
+ * @see GraphColoring.h for full documentation.
+ */
 InterferenceGraph::InterferenceGraph(int K) : K(K) {}
 
+/**
+ * @brief Implementation of InterferenceGraph::build.
+ * @see GraphColoring.h for full documentation.
+ */
 void InterferenceGraph::build(const std::vector<Web>& webs) {
     for (const auto& w : webs) {
         graph.addVertex(w.id);
@@ -34,6 +42,10 @@ static int getEffectiveDegree(Vertex<int>* v, const std::unordered_set<int>& act
     return degree;
 }
 
+/**
+ * @brief Implementation of GraphColoring::basicColoring.
+ * @see GraphColoring.h for full documentation.
+ */
 bool GraphColoring::basicColoring(Graph<int>& ig, int K,
                                   std::unordered_map<int, int>& colorAssignment) {
     std::unordered_set<int> active;
@@ -91,15 +103,23 @@ bool GraphColoring::basicColoring(Graph<int>& ig, int K,
     return true;
 }
 
+/**
+ * @brief Implementation of GraphColoring::coloringWithSpilling.
+ * @see GraphColoring.h for full documentation.
+ */
 bool GraphColoring::coloringWithSpilling(Graph<int>& ig, int K,
                                           std::unordered_map<int, int>& colorAssignment,
-                                          std::vector<int>& spilledWebs) {
+                                          std::vector<int>& spilledWebs,
+                                          int maxSpills) {
     std::unordered_set<int> active;
     for (auto* v : ig.getVertexSet()) {
         active.insert(v->getInfo());
     }
 
-    while (spilledWebs.size() < ig.getVertexSet().size()) {
+    int effectiveMax = (maxSpills < 0) ? ig.getVertexSet().size() : maxSpills;
+
+    while (spilledWebs.size() < static_cast<size_t>(effectiveMax) &&
+           spilledWebs.size() < ig.getVertexSet().size()) {
         colorAssignment.clear();
         std::unordered_set<int> remaining = active;
         std::stack<int> nodeStack;
@@ -170,6 +190,10 @@ bool GraphColoring::coloringWithSpilling(Graph<int>& ig, int K,
     return false;
 }
 
+/**
+ * @brief Implementation of GraphColoring::allocateRegistersFree.
+ * @see GraphColoring.h for full documentation.
+ */
 template <class T>
 std::map<T, std::string> GraphColoring::allocateRegistersFree(Graph<T>* graph, int maxRegisters) {
     std::map<T, std::string> finalAllocation;
@@ -226,6 +250,96 @@ std::map<T, std::string> GraphColoring::allocateRegistersFree(Graph<T>* graph, i
 
 template std::map<int, std::string> GraphColoring::allocateRegistersFree(Graph<int>* graph, int maxRegisters);
 
+/**
+ * @brief Selects the web with the highest degree in the interference graph.
+ * @param graph The interference graph.
+ * @return The vertex ID of the highest-degree web, or -1 if the graph is empty.
+ */
+static int pickWebToSplit(const Graph<int>& graph) {
+    const auto& vertices = graph.getVertexSet();
+    if (vertices.empty()) return -1;
+    int worstId = vertices.front()->getInfo();
+    size_t maxDeg = vertices.front()->getAdj().size();
+    for (auto* v : vertices) {
+        if (v->getAdj().size() > maxDeg) {
+            maxDeg = v->getAdj().size();
+            worstId = v->getInfo();
+        }
+    }
+    return worstId;
+}
+
+/**
+ * @brief Splits a web's live range at its midpoint.
+ * @details The original web keeps intervals and program points at or before the
+ * split point. A new web (with incremented ID and label suffixed with "_s")
+ * receives the remainder. Intervals spanning the split point are divided.
+ * @param webs The vector of all webs (the new web is appended).
+ * @param idx Index in @p webs of the web to split.
+ * @param nextId The next available web ID (incremented after creating the new web).
+ * @param entry Output tuple populated as (originalId, newWebId, splitPoint).
+ */
+static void splitWeb(std::vector<Web>& webs, size_t idx, int& nextId,
+                     std::tuple<int,int,int>& entry) {
+    Web& original = webs[idx];
+
+    int splitPoint = -1;
+    if (original.liveRanges.size() > 1) {
+        for (size_t i = 0; i + 1 < original.liveRanges.size(); ++i) {
+            if (original.liveRanges[i].end + 1 < original.liveRanges[i + 1].start) {
+                splitPoint = original.liveRanges[i].end;
+                break;
+            }
+        }
+    }
+    if (splitPoint < 0) {
+        int minStart = original.liveRanges.front().start;
+        int maxEnd = original.liveRanges.front().end;
+        for (const auto& interval : original.liveRanges) {
+            if (interval.start < minStart) minStart = interval.start;
+            if (interval.end > maxEnd) maxEnd = interval.end;
+        }
+        splitPoint = (minStart + maxEnd) / 2;
+    }
+
+    Web newWeb;
+    newWeb.id = nextId++;
+    newWeb.label = original.label + "_s" + std::to_string(nextId);
+
+    std::vector<Interval> originalRanges, newRanges;
+    for (const auto& interval : original.liveRanges) {
+        if (interval.end <= splitPoint) {
+            originalRanges.push_back(interval);
+        } else if (interval.start > splitPoint) {
+            newRanges.push_back(interval);
+        } else {
+            originalRanges.push_back({interval.start, splitPoint});
+            newRanges.push_back({splitPoint + 1, interval.end});
+        }
+    }
+
+    std::vector<ProgramPoint> originalPoints, newPoints;
+    for (const auto& point : original.points) {
+        if (point.line <= splitPoint) {
+            originalPoints.push_back(point);
+        } else {
+            newPoints.push_back(point);
+        }
+    }
+
+    original.liveRanges = originalRanges;
+    original.points = originalPoints;
+    newWeb.liveRanges = newRanges;
+    newWeb.points = newPoints;
+
+    entry = std::make_tuple(original.id, newWeb.id, splitPoint);
+    webs.push_back(newWeb);
+}
+
+/**
+ * @brief Implementation of GraphColoring::coloringWithSplitting.
+ * @see GraphColoring.h for full documentation.
+ */
 bool GraphColoring::coloringWithSplitting(std::vector<Web>& webs, int K, int maxSplits,
                                            std::unordered_map<int, int>& colorAssignment,
                                            std::vector<std::tuple<int,int,int>>& splitLog) {

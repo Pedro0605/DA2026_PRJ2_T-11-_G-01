@@ -5,7 +5,7 @@
 #include "DataStructures.h"
 #include <string>
 #include <vector>
-#include <unordered_set>
+
 
 /**
  * @brief Stores the parsed configuration from the registers file.
@@ -42,8 +42,8 @@ public:
      * live ranges under the same label are merged into a single web.
      *
      * @par Time complexity
-     * O(L * F^2 * P) where L is the number of unique labels, F is the number
-     * of fragments per label, and P is the average point-set size per fragment.
+     * O(L * F^3 * I) where L is the number of unique labels, F is the number
+     * of fragments per label, and I is the average number of intervals per fragment.
      *
      * @param filename Path to the ranges file.
      * @param webs Output vector of parsed Web objects.
@@ -58,8 +58,8 @@ private:
     static std::vector<Interval> parsePoints(const std::string& pointsStr);
     /** @brief Parses a comma-separated list of points into ProgramPoint objects. */
     static std::vector<ProgramPoint> parseProgramPoints(const std::string& pointsStr);
-    /** @brief Builds a set of all integer points covered by a list of intervals. */
-    static std::unordered_set<int> pointSet(const std::vector<Interval>& intervals);
+    /** @brief Checks if any interval in set A overlaps with any interval in set B. */
+    static bool intervalsOverlap(const std::vector<Interval>& a, const std::vector<Interval>& b);
 };
 
 #endif //DA2026_PRJ2_T_11__G_01_PARSER_H

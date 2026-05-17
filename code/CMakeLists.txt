@@ -26,7 +26,6 @@ set(HEADERS
     include/Parser.h
     include/Output.h
     include/Menu.h
-    include/include.h
 )
 
 add_executable(myProg ${SOURCES} ${HEADERS})

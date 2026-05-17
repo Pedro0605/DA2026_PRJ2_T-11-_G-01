@@ -49,8 +49,9 @@ private:
 /**
  * @brief Implements graph coloring algorithms for register allocation.
  *
- * Provides static methods for Chaitin-style basic coloring and coloring
- * with spilling heuristics.
+ * Provides static methods for Chaitin-style basic coloring, coloring
+ * with spilling heuristics, live-range splitting, and custom
+ * (Welsh-Powell) allocation.
  */
 class GraphColoring {
 public:
@@ -76,30 +77,56 @@ public:
     static bool basicColoring(Graph<int>& ig, int K,
                               std::unordered_map<int, int>& colorAssignment);
 
-    /**
-     * @brief Performs graph coloring with iterative spilling.
-     * @details
-     * Attempts basic coloring; if it fails, selects the vertex with the highest
-     * effective degree (the "worst" node), marks it for spilling, and retries.
-     * This process repeats until either a successful coloring is found or all
-     * vertices are spilled.
-     *
-     * @par Time complexity
-     * O(S * V^2) where V is the number of vertices and S is the number of
-     * spilled vertices. In the worst case S = V, giving O(V^3).
-     *
-     * @param ig The interference graph.
-     * @param K  Number of available colors (registers).
-     * @param colorAssignment Output map from vertex ID to assigned color.
-     * @param spilledWebs Output vector of vertex IDs that were spilled to memory.
-     * @return True if coloring succeeded after spilling, false otherwise.
-     */
+     /**
+      * @brief Performs graph coloring with iterative spilling.
+      * @details
+      * Attempts basic coloring; if it fails, selects the vertex with the highest
+      * effective degree (the "worst" node), marks it for spilling, and retries.
+      * This process repeats until either a successful coloring is found or the
+      * maximum number of spills is reached (or all vertices are spilled if no limit).
+      *
+      * @par Time complexity
+      * O(S * V^2) where V is the number of vertices and S is the number of
+      * spilled vertices. In the worst case S = V, giving O(V^3).
+      *
+      * @param ig The interference graph.
+      * @param K  Number of available colors (registers).
+      * @param colorAssignment Output map from vertex ID to assigned color.
+      * @param spilledWebs Output vector of vertex IDs that were spilled to memory.
+      * @param maxSpills Maximum number of webs to spill (default: -1 = unlimited).
+      * @return True if coloring succeeded after spilling, false otherwise.
+      */
     static bool coloringWithSpilling(Graph<int>& ig, int K,
                                      std::unordered_map<int, int>& colorAssignment,
-                                     std::vector<int>& spilledWebs);
+                                     std::vector<int>& spilledWebs,
+                                     int maxSpills = -1);
 
     /**
-     * @brief Performs custom graph coloring using the Welsh-Powell algorithm (T2.4).
+     * @brief Performs graph coloring with live-range splitting.
+     * @details
+     * Attempts basic Chaitin coloring on the current set of webs. If coloring fails,
+     * the highest-degree web is split at the midpoint of its live range, reducing
+     * interferences. The process repeats until success or the split budget is exhausted.
+     *
+     * @par Time complexity
+     * O(S * V^3) where V is the initial number of webs and S is the number of splits
+     * performed. Each iteration rebuilds the interference graph and re-runs basic
+     * coloring (O(V^2) per iteration for the graph build, O(V^2) for coloring).
+     *
+     * @param webs The vector of webs (may grow as splits create new webs).
+     * @param K Number of available registers.
+     * @param maxSplits Maximum number of splits allowed.
+     * @param colorAssignment Output map from web ID to assigned color.
+     * @param splitLog Output log of splits performed, each entry is a tuple
+     *                 (originalWebId, newWebId, splitPoint).
+     * @return True if the graph was successfully K-colored, false otherwise.
+     */
+    static bool coloringWithSplitting(std::vector<Web>& webs, int K, int maxSplits,
+                                std::unordered_map<int, int>& colorAssignment,
+                                std::vector<std::tuple<int, int, int>>& splitLog);
+
+    /**
+     * @brief Performs custom graph coloring using the Welsh-Powell algorithm.
      * @details
      * Sorts vertices by degree in descending order and colors them greedily to minimize
      * register usage. Any vertices that cannot be colored with the available registers
@@ -115,27 +142,6 @@ public:
      */
     template <class T>
     static std::map<T, std::string> allocateRegistersFree(Graph<T>* graph, int maxRegisters);
-
-    static bool coloringWithSplitting(std::vector<Web>& webs, int K, int maxSplits,
-                                  std::unordered_map<int, int>& colorAssignment,
-                                  std::vector<std::tuple<int, int, int>>& splitLog);
-
-    /**
-     * @brief Performs custom graph coloring using the Welsh-Powell algorithm (T2.4).
-     * @details
-     * Sorts vertices by degree in descending order and colors them greedily to minimize
-     * register usage. Any vertices that cannot be colored with the available registers
-     * are spilled to memory.
-     *
-     * @par Time complexity
-     * O(V * log V + V^2 * K) where V is the number of vertices and K is the number
-     * of available colors (registers).
-     *
-     * @param graph Pointer to the interference graph.
-     * @param maxRegisters Number of available colors (registers).
-     * @return Map linking each web to its assigned register ("rX") or memory ("M").
-     */
-
 };
 
 #endif

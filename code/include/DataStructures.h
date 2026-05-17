@@ -51,16 +51,38 @@ struct Web {
     std::vector<ProgramPoint> points; /**< Program points where this web is live. */
     std::string assignedResource;  /**< Assigned resource ("r0", "r1", ..., or "M"). */
 
+    bool isDefAt(int line) const {
+        for (const auto& p : points)
+            if (p.line == line && p.symbol == '+') return true;
+        return false;
+    }
+
+    bool isUseAt(int line) const {
+        for (const auto& p : points)
+            if (p.line == line && p.symbol == '-') return true;
+        return false;
+    }
+
     /**
      * @brief Checks whether this web interferes with another.
-     * @details Two webs interfere if any of their live range intervals overlap.
+     * @details Two webs interfere if any of their live range intervals overlap,
+     * excluding boundary-only overlaps where one ends with '-' and the other
+     * starts with '+' at the same line (per spec non-interference rule).
+     *
+     * @par Time complexity
+     * O(I1 * I2 * P) where I1, I2 are the number of live range intervals in
+     * each web, and P is the number of program points per web (for marker lookups).
+     *
      * @param other The other web to check against.
      * @return True if the webs interfere, false otherwise.
      */
     bool interferesWith(const Web& other) const {
         for (const auto& a : liveRanges) {
             for (const auto& b : other.liveRanges) {
-                if (a.overlaps(b)) return true;
+                if (!a.overlaps(b)) continue;
+                if (a.end == b.start && isUseAt(a.end) && other.isDefAt(b.start)) continue;
+                if (a.start == b.end && isDefAt(a.start) && other.isUseAt(b.end)) continue;
+                return true;
             }
         }
         return false;

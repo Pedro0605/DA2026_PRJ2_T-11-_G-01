@@ -1,0 +1,28 @@
+var classMenu =
+[
+    [ "applyResults", "classMenu.html#a7edb586f9d37fbb073be4e446f017f8b", null ],
+    [ "clearState", "classMenu.html#a09761c7c40e3c88f32683e73ab139821", null ],
+    [ "displayMenu", "classMenu.html#a7ceb2718cac4b01b62731e1bcf4283f1", null ],
+    [ "displayResults", "classMenu.html#a790cffe6a9f1d6f92cc55ca4ce39ba5b", null ],
+    [ "loadRanges", "classMenu.html#a051c2012783f4d2a9763b82437debe3a", null ],
+    [ "loadRegisters", "classMenu.html#a8b7a41718d1e8bf9574e038270020267", null ],
+    [ "resourceForWeb", "classMenu.html#aadd8c769784f09e4132c7ee6b444c16b", null ],
+    [ "run", "classMenu.html#a35656cd130e24d69383a5c9d0a73a38c", null ],
+    [ "runBasic", "classMenu.html#a13c7a44bf4c2e26e77ef33dbd925392a", null ],
+    [ "runConfiguredAlgorithm", "classMenu.html#a7818c5e6061dc5306d00c3d848cfbaf7", null ],
+    [ "runCustom", "classMenu.html#aa7f7f44cb896ddfc5f0d89ecc999c055", null ],
+    [ "runSpilling", "classMenu.html#a4a94895fffaf9a1b9ea1513215cb2848", null ],
+    [ "runSplitting", "classMenu.html#ae843fde7ac4513a61c7bb7eed61e3ae3", null ],
+    [ "writeOutput", "classMenu.html#a7656c18f3220ec8be5dde1c40f6b6352", null ],
+    [ "allocationDone", "classMenu.html#a3e8e9c738184e8a6e432d90a2f30b797", null ],
+    [ "allocationSuccess", "classMenu.html#af607b8f169ae76c63e1cb36373d66615", null ],
+    [ "colorAssignment", "classMenu.html#a2ddac670b6c15ec2a711e54566572c87", null ],
+    [ "config", "classMenu.html#abc64e7ff0bd55fb46277cb46b84fba23", null ],
+    [ "outputFilename", "classMenu.html#a2b6fa88e5dd1c928a39b5429fc98f039", null ],
+    [ "rangesFilename", "classMenu.html#a0cfe6d333ae2234068a42683728d1155", null ],
+    [ "rangesLoaded", "classMenu.html#ab278c7727290690e57fcbc918d4448b9", null ],
+    [ "registersFilename", "classMenu.html#a958b6a366f95379d415ade1166635844", null ],
+    [ "registersLoaded", "classMenu.html#ad34c8b0655b87ccf59feab3e2d0692c9", null ],
+    [ "spilledWebs", "classMenu.html#ab3bce85b2d9117226bed8af7c576e7a4", null ],
+    [ "webs", "classMenu.html#a83b37c79d8edc910a9547e776f470611", null ]
+];
