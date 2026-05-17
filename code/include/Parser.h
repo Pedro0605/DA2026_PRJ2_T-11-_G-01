@@ -2,6 +2,7 @@
 #define DA2026_PRJ2_T_11__G_01_PARSER_H
 
 #include "GraphColoring.h"
+#include "DataStructures.h"
 #include <string>
 #include <vector>
 #include <unordered_set>

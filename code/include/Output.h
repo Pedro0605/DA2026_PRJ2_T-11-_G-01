@@ -1,7 +1,7 @@
 #ifndef DA2026_PRJ2_T_11__G_01_OUTPUT_H
 #define DA2026_PRJ2_T_11__G_01_OUTPUT_H
 
-#include "GraphColoring.h"
+#include "DataStructures.h"
 #include <string>
 #include <vector>
 
